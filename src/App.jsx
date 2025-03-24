@@ -211,6 +211,7 @@ export default function App() {
         <label className="block text-sm font-medium mb-1">{t.daysLabel}</label>
         <input
           type="number"
+          inputMode="numeric"
           value={antallDager}
           onChange={(e) => handleAntallDagerChange(e.target.value)}
           className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-700"
