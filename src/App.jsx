@@ -256,7 +256,7 @@ export default function App() {
 
             <button
               onClick={() => fjernSilo(idx)}
-              className="text-sm text-red-600 hover:underline mb-2"
+              className="text-sm text-black dark:text-white bg-red-400 hover:bg-red-300 p-2 rounded-md mb-2"
             >
               {t.removeSilo}
             </button>
