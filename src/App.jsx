@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
 
+
 const TEXTS = {
   no: {
     title: "🧮 Fôrbestillingskalkulator",
@@ -8,7 +9,7 @@ const TEXTS = {
     bufferLabel: "Buffer (f.eks. 1.2 for 20% ekstra):",
     siloSection: "📦 Siloer",
     removeSilo: "Fjern silo",
-    addSilo: "➕ Legg til silo",
+    addSilo: "Legg til silo",
     totalLabel: "📊 Anbefalt bestilling:",
     totalText: "Total",
     totalFortype: "📦 Total per fôrtype:",
@@ -41,7 +42,7 @@ const TEXTS = {
     bufferLabel: "Buffer (e.g. 1.2 for 20% extra):",
     siloSection: "📦 Silos",
     removeSilo: "Remove silo",
-    addSilo: "➕ Add silo",
+    addSilo: "Add silo",
     totalLabel: "📊 Recommended ordering:",
     totalText: "Total",
     totalFortype: "📦 Total per feed type:",
@@ -256,8 +257,9 @@ export default function App() {
 
             <button
               onClick={() => fjernSilo(idx)}
-              className="text-sm text-black dark:text-white bg-red-400 hover:bg-red-300 p-2 rounded-md mb-2"
+              className="text-sm text-white bg-red-500 hover:bg-red-400 p-2 rounded-md mb-2"
             >
+              <i class="bi mr-1 bi-trash3"></i>
               {t.removeSilo}
             </button>
 
@@ -293,9 +295,11 @@ export default function App() {
         );
       })}
       <button
+      
         onClick={leggTilSilo}
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-500"
       >
+        <i class="bi mr-2 bi-plus-square text-primary"></i>
         {t.addSilo}
       </button>
 
