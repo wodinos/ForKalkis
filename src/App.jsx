@@ -221,6 +221,7 @@ export default function App() {
         <label className="block text-sm font-medium mb-1">{t.bufferLabel}</label>
         <input
           type="number"
+          inputMode="decimal"
           step="0.1"
           value={buffer}
           onChange={(e) => handleBufferChange(e.target.value)}
@@ -251,6 +252,7 @@ export default function App() {
             </label>
             <input
               type="number"
+              inputMode="numeric"
               value={silo.forbruk}
               onChange={(e) => handleSiloChange(idx, "forbruk", e.target.value)}
               className="border p-2 w-full rounded mb-2 bg-white dark:bg-gray-700 dark:border-gray-600"
