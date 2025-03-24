@@ -85,26 +85,21 @@ export default function App() {
     localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
 
-  const [lang, setLang] = useState(() => {
-    const savedLang = localStorage.getItem("lang");
-    return savedLang ? savedLang : "no";
-  });
-
-  useEffect(() => {
-    localStorage.setItem("lang", lang);
-  }, [lang]);
-
+  const [lang, setLang] = useState(() => localStorage.getItem("lang") || "no");
+  useEffect(() => localStorage.setItem("lang", lang), [lang]);
   const t = TEXTS[lang];
 
   const [antallDager, setAntallDager] = useState(() => {
     const saved = localStorage.getItem("antallDager");
     return saved ? parseInt(saved, 10) : 7;
   });
+  useEffect(() => localStorage.setItem("antallDager", antallDager), [antallDager]);
 
   const [buffer, setBuffer] = useState(() => {
     const saved = localStorage.getItem("buffer");
     return saved ? parseFloat(saved) : 1.2;
   });
+  useEffect(() => localStorage.setItem("buffer", buffer), [buffer]);
 
   const [siloer, setSiloer] = useState(() => {
     const saved = localStorage.getItem("siloer");
@@ -117,69 +112,81 @@ export default function App() {
           { navn: "silo4", fortype: "1000", forbruk: 0 },
         ];
   });
-
-  useEffect(() => localStorage.setItem("antallDager", antallDager), [antallDager]);
-  useEffect(() => localStorage.setItem("buffer", buffer), [buffer]);
   useEffect(() => localStorage.setItem("siloer", JSON.stringify(siloer)), [siloer]);
 
-  const totalForbruk = siloer.reduce((sum, silo) => sum + (parseFloat(silo.forbruk) || 0), 0);
-  const dagligSnitt = antallDager > 0 ? totalForbruk / antallDager : 0;
-  const anbefaltBestilling = dagligSnitt * antallDager * buffer;
+  const [visHjelp, setVisHjelp] = useState(false);
+  const [visTotalUtregning, setVisTotalUtregning] = useState(false);
+  const [visSiloDetaljer, setVisSiloDetaljer] = useState({});
 
-  const fordelinger = siloer.map((silo) => {
-    const siloForbruk = parseFloat(silo.forbruk) || 0;
-    const andel =
-      totalForbruk > 0 ? (siloForbruk / totalForbruk) * anbefaltBestilling : 0;
-    return { ...silo, andel };
-  });
+  const toggleLanguage = () => setLang(lang === "no" ? "en" : "no");
 
   const handleAntallDagerChange = (val) => {
     const parsed = parseInt(val, 10);
     setAntallDager(parsed > 0 ? parsed : 7);
   };
 
-  const handleBufferChange = (value) => {
-    const numeric = parseFloat(value);
-    setBuffer(numeric < 0 ? 0 : numeric || 0);
-    if (numeric < 0) alert(t.negativeError);
+  const handleBufferChange = (val) => {
+    const numeric = parseFloat(val);
+    if (numeric < 0) {
+      alert(t.negativeError);
+      setBuffer(0);
+    } else {
+      setBuffer(numeric || 0);
+    }
   };
 
-  const handleSiloChange = (index, field, val) => {
+  const handleSiloChange = (index, field, value) => {
     const updated = [...siloer];
     if (field === "forbruk") {
-      const numeric = parseFloat(val);
-      updated[index].forbruk = numeric < 0 ? 0 : numeric || 0;
-      if (numeric < 0) alert(t.negativeError);
+      const num = parseFloat(value);
+      updated[index].forbruk = num >= 0 ? num : 0;
     } else {
-      updated[index][field] = val;
+      updated[index][field] = value;
     }
     setSiloer(updated);
   };
 
   const leggTilSilo = () => {
-    const nyttNavn = `${t.siloName}${siloer.length + 1}`;
-    setSiloer([...siloer, { navn: nyttNavn, fortype: "", forbruk: 0 }]);
+    const nyNavn = `${t.siloName}${siloer.length + 1}`;
+    setSiloer([...siloer, { navn: nyNavn, fortype: "", forbruk: 0 }]);
   };
 
-  const fjernSilo = (index) => setSiloer(siloer.filter((_, i) => i !== index));
+  const fjernSilo = (index) => {
+    const ny = siloer.filter((_, i) => i !== index);
+    setSiloer(ny);
+  };
+
+  const totalForbruk = siloer.reduce(
+    (sum, silo) => sum + (parseFloat(silo.forbruk) || 0),
+    0
+  );
+  const dagligSnitt = antallDager > 0 ? totalForbruk / antallDager : 0;
+  const anbefaltBestilling = dagligSnitt * antallDager * buffer;
+
+  const fordelinger = siloer.map((silo) => {
+    const siloForbruk = parseFloat(silo.forbruk) || 0;
+    const prosent = totalForbruk > 0 ? siloForbruk / totalForbruk : 0;
+    return {
+      ...silo,
+      andel: prosent * anbefaltBestilling,
+    };
+  });
 
   const summerPerFortype = {};
   fordelinger.forEach(({ fortype, andel }) => {
     summerPerFortype[fortype] = (summerPerFortype[fortype] || 0) + andel;
   });
 
-  const summerPerFortypeMedSekker = Object.entries(summerPerFortype).map(([fortype, sum]) => {
-    const sekkeAntall = Math.round(sum / 750);
-    return { fortype, sum, justertVekt: sekkeAntall * 750 };
-  });
-
-  const [visHjelp, setVisHjelp] = useState(false);
-  const toggleHjelp = () => setVisHjelp(!visHjelp);
-  const toggleLanguage = () => setLang(lang === "no" ? "en" : "no");
+  const summerPerFortypeMedSekker = Object.entries(summerPerFortype).map(
+    ([fortype, sum]) => {
+      const sekkeAntall = Math.round(sum / 750);
+      return { fortype, sum, justertVekt: sekkeAntall * 750 };
+    }
+  );
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-4 mb-2 bg-white dark:bg-gray-900 shadow-md rounded-lg text-black dark:text-white">
-      {/* Topp-overskrift og knapper */}
+    <div className="max-w-2xl mx-auto p-4 mb-6 bg-white dark:bg-gray-900 text-black dark:text-white rounded shadow-md">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">{t.title}</h1>
         <div className="flex gap-2">
@@ -198,8 +205,8 @@ export default function App() {
         </div>
       </div>
 
-      {/* Antall dager */}
-      <div className="mb-6">
+      {/* Inputs */}
+      <div className="mb-4">
         <label className="block text-sm font-medium mb-1">{t.daysLabel}</label>
         <input
           type="number"
@@ -208,9 +215,7 @@ export default function App() {
           className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-700"
         />
       </div>
-
-      {/* Buffer */}
-      <div className="mb-6">
+      <div className="mb-4">
         <label className="block text-sm font-medium mb-1">{t.bufferLabel}</label>
         <input
           type="number"
@@ -222,87 +227,127 @@ export default function App() {
       </div>
 
       {/* Siloer */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">{t.siloSection}</h2>
-        {siloer.map((silo, index) => (
-          <div key={index} className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md mb-4">
+      <h2 className="text-xl font-semibold mt-4 mb-2">{t.siloSection}</h2>
+      {siloer.map((silo, idx) => {
+        const bestillingSilo = (parseFloat(silo.forbruk) || 0) * buffer;
+        const isOpen = visSiloDetaljer[idx] || false;
+
+        return (
+          <div key={idx} className="bg-gray-100 dark:bg-gray-800 p-3 mb-3 rounded">
             <h3 className="text-lg font-semibold mb-2">{silo.navn.toUpperCase()}</h3>
 
-            <div className="mb-3">
-              <label className="block text-sm font-medium mb-1">{t.fortypeLabel}</label>
-              <input
-                type="text"
-                value={silo.fortype}
-                onChange={(e) => handleSiloChange(index, "fortype", e.target.value)}
-                className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700 dark:border-gray-600"
-              />
-            </div>
+            <label className="block text-sm font-medium">{t.fortypeLabel}</label>
+            <input
+              type="text"
+              value={silo.fortype}
+              onChange={(e) => handleSiloChange(idx, "fortype", e.target.value)}
+              className="border p-2 w-full rounded mb-2 bg-white dark:bg-gray-700 dark:border-gray-600"
+            />
 
-            <div className="mb-3">
-              <label className="block text-sm font-medium mb-1">
-                {t.forbrukLabel(antallDager)}
-              </label>
-              <input
-                type="number"
-                value={silo.forbruk}
-                onChange={(e) => handleSiloChange(index, "forbruk", e.target.value)}
-                className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700 dark:border-gray-600"
-              />
-            </div>
+            <label className="block text-sm font-medium">
+              {t.forbrukLabel(antallDager)}
+            </label>
+            <input
+              type="number"
+              value={silo.forbruk}
+              onChange={(e) => handleSiloChange(idx, "forbruk", e.target.value)}
+              className="border p-2 w-full rounded mb-2 bg-white dark:bg-gray-700 dark:border-gray-600"
+            />
 
             <button
-              onClick={() => fjernSilo(index)}
-              className="text-sm bg-red-500 p-2 rounded-md text-white hover:underline"
+              onClick={() => fjernSilo(idx)}
+              className="text-sm text-red-600 hover:underline mb-2"
             >
               {t.removeSilo}
             </button>
+
+            <p className="text-sm">
+              <strong>{lang === "no" ? "Enkel silo-bestilling" : "Simple silo order"}</strong>: {bestillingSilo.toFixed(2)} kg
+            </p>
+
+            <button
+              className="mt-2 bg-gray-200 dark:bg-gray-700 text-sm px-2 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+              onClick={() =>
+                setVisSiloDetaljer((prev) => ({ ...prev, [idx]: !prev[idx] }))
+              }
+            >
+              {isOpen
+                ? lang === "no" ? "Skjul detaljer" : "Hide details"
+                : lang === "no" ? "Vis detaljer" : "Show details"}
+            </button>
+
+            {isOpen && (
+              <div className="mt-2 text-sm border rounded p-2 dark:border-gray-600">
+                <p>
+                  <strong>{lang === "no" ? "Totalt forbruk på silo" : "Total usage on silo"}</strong>: {(parseFloat(silo.forbruk) || 0).toFixed(2)} kg
+                </p>
+                <p>
+                  <strong>Buffer</strong>: {buffer.toFixed(2)}
+                </p>
+                <p>
+                  <strong>{lang === "no" ? "Anbefalt bestilling" : "Recommended order"}</strong>: {bestillingSilo.toFixed(2)} kg
+                </p>
+              </div>
+            )}
           </div>
+        );
+      })}
+      <button
+        onClick={leggTilSilo}
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
+        {t.addSilo}
+      </button>
+
+      {/* Totaler */}
+      <div className="mt-6 bg-gray-100 dark:bg-gray-800 p-4 rounded">
+        <h2 className="text-xl font-semibold mb-2">{t.totalLabel}</h2>
+        <p>{t.totalText}: {anbefaltBestilling.toFixed(2)} kg</p>
+
+        <button
+          onClick={() => setVisTotalUtregning(!visTotalUtregning)}
+          className="mt-2 bg-gray-200 dark:bg-gray-700 text-sm px-2 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+        >
+          {visTotalUtregning ? (lang === "no" ? "Skjul utregning" : "Hide calc") : (lang === "no" ? "Vis utregning" : "Show calc")}
+        </button>
+
+        {visTotalUtregning && (
+          <div className="mt-2 text-sm border rounded p-2 dark:border-gray-600">
+            <ul className="list-disc pl-5">
+              <li>{lang === "no" ? "Totalt forbruk" : "Total usage"}: {totalForbruk.toFixed(2)} kg</li>
+              <li>{lang === "no" ? "Daglig snitt" : "Daily average"}: {dagligSnitt.toFixed(2)} kg</li>
+              <li>× {antallDager} × {buffer.toFixed(2)} = <strong>{anbefaltBestilling.toFixed(2)} kg</strong></li>
+            </ul>
+          </div>
+        )}
+
+        {fordelinger.map((s, i) => (
+          <p key={i}>
+            {s.navn.toUpperCase()} ({s.fortype}): {s.andel.toFixed(2)} kg
+          </p>
         ))}
 
-        <button
-          onClick={leggTilSilo}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          {t.addSilo}
-        </button>
-      </div>
-
-      {/* Resultat */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">{t.totalLabel}</h2>
-        <p className="mb-2 font-medium">{t.totalText}: {anbefaltBestilling.toFixed(2)} kg</p>
-        <ul className="list-disc pl-5">
-          {fordelinger.map((silo, index) => (
-            <li key={index}>
-              {silo.navn.toUpperCase()} ({silo.fortype}): {silo.andel.toFixed(2)} kg
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Per fôrtype */}
-      <div>
-        <h2 className="text-xl font-semibold mb-2">{t.totalFortype}</h2>
-        <ul className="list-disc pl-5">
+        <div className="mt-4">
+          <h3 className="font-semibold">{t.totalFortype}</h3>
           {summerPerFortypeMedSekker.map(({ fortype, sum, justertVekt }) => (
-            <li key={fortype}>
+            <p key={fortype}>
               {fortype}: {sum.toFixed(2)} kg → {t.nearest} <strong>{justertVekt} kg</strong>
-            </li>
+            </p>
           ))}
-        </ul>
+        </div>
       </div>
 
-      {/* Hjelp */}
+      {/* Hjelpe-seksjon */}
       <div className="mt-6">
         <button
-          onClick={toggleHjelp}
+          onClick={() => setVisHjelp(!visHjelp)}
           className="bg-gray-200 dark:bg-gray-700 text-sm px-3 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
         >
           {visHjelp ? t.helpClose : t.help}
         </button>
 
         {visHjelp && (
-          <div className="mt-2 text-sm text-gray-700 dark:text-gray-200 border dark:border-gray-600 rounded p-2">
+          <div className="mt-2 text-sm text-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded p-2">
             <p className="mb-2 font-semibold">{t.why750}</p>
             <p>{t.why750Explain}</p>
             <p className="mt-1">{t.smallDeviation}</p>
