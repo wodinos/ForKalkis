@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function ForKalkulator() {
+export default function App() {
   const [buffer, setBuffer] = useState(1.2);
   const [siloer, setSiloer] = useState([
     { navn: "silo1", fortype: "200", forbruk: 0 },
@@ -51,78 +51,87 @@ export default function ForKalkulator() {
   });
 
   return (
-    <div className="p-4 max-w-xl mx-auto ">
-      <h1 className="text-2xl font-bold mb-4">Fôrbestillingskalkulator</h1>
+    <div className="max-w-2xl mx-auto p-6 bg-white shadow-md rounded-lg">
+      <h1 className="text-3xl font-bold text-center mb-6">🧮 Fôrbestillingskalkulator</h1>
 
-      <div className="mt-4">
-        <label className="block">Buffer (f.eks. 1.2 for 20% ekstra):</label>
+      <div className="mb-6">
+        <label className="block text-sm font-medium mb-1">Buffer (f.eks. 1.2 for 20% ekstra):</label>
         <input
           type="number"
           value={buffer}
           step="0.1"
           onChange={(e) => handleBufferChange(e.target.value)}
-          className="border p-2 w-full rounded"
+          className="w-full border rounded px-3 py-2"
         />
       </div>
 
-      <div className="mt-6">
-        <h2 className="text-xl font-semibold">Siloer</h2>
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">📦 Siloer</h2>
         {siloer.map((silo, index) => (
-          <div key={index} className="border p-2 rounded mb-2">
-            <label className="block font-medium">{silo.navn.toUpperCase()}</label>
-            <label htmlFor="fortype" className="block text-sm font-medium text-gray-700 mb-1">
-    Fôrtype
-  </label>
-  <input
-    id="fortype"
-    name="fortype"
-    type="text"
-    value={silo.fortype}
-    onChange={(e) => handleSiloChange(index, "fortype", e.target.value)}
-    className="border p-2 w-full rounded"
-  />
-  <label htmlFor="kgBrukt" className="block text-sm font-medium text-gray-700 mb-1">Kg brukt siste 7 dager</label>
-            <input
-            name="kgBrukt"
-              type="number"
-              value={silo.forbruk}
-              placeholder="Forbruk (kg)"
-              onChange={(e) => handleSiloChange(index, "forbruk", e.target.value)}
-              className="border p-1 w-full rounded mt-1"
-            />
+          <div key={index} className="bg-gray-100 p-4 rounded-md mb-4">
+            <h3 className="text-lg font-semibold mb-2">{silo.navn.toUpperCase()}</h3>
+
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Fôrtype</label>
+              <input
+                type="text"
+                value={silo.fortype}
+                onChange={(e) => handleSiloChange(index, "fortype", e.target.value)}
+                className="w-full border rounded px-3 py-2"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Kg brukt siste 7 dager
+              </label>
+              <input
+                type="number"
+                value={silo.forbruk}
+                onChange={(e) => handleSiloChange(index, "forbruk", e.target.value)}
+                className="w-full border rounded px-3 py-2"
+              />
+            </div>
+
             <button
               onClick={() => fjernSilo(index)}
-              className="mt-2 bg-red-300 p-2 border rounded-md text-red-600 hover:underline"
+              className="text-sm text-red-600 hover:underline"
             >
               Fjern silo
             </button>
           </div>
         ))}
+
         <button
           onClick={leggTilSilo}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          Legg til silo
+          ➕ Legg til silo
         </button>
       </div>
 
-      <div className="mt-6">
-        <h2 className="text-xl font-semibold">Anbefalt bestilling:</h2>
-        <p>Total: {anbefaltBestilling.toFixed(2)} kg</p>
-        {fordelinger.map((silo, index) => (
-          <p key={index}>
-            {silo.navn.toUpperCase()} ({silo.fortype}): {silo.andel.toFixed(2)} kg
-          </p>
-        ))}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">📊 Anbefalt bestilling:</h2>
+        <p className="mb-2 font-medium">Total: {anbefaltBestilling.toFixed(2)} kg</p>
+        <ul className="list-disc pl-5">
+          {fordelinger.map((silo, index) => (
+            <li key={index}>
+              {silo.navn.toUpperCase()} ({silo.fortype}): {silo.andel.toFixed(2)} kg
+            </li>
+          ))}
+        </ul>
       </div>
 
-      <div className="mt-6">
-        <h2 className="text-xl font-semibold">Total per fôrtype:</h2>
-        {summerPerFortypeMedSekker.map(({ fortype, sum, justertVekt }) => (
-          <p key={fortype}>
-            {fortype}: {sum.toFixed(2)} kg → Bestill nærmeste mengde: <strong>{justertVekt} kg</strong>
-          </p>
-        ))}
+      <div>
+        <h2 className="text-xl font-semibold mb-2">📦 Total per fôrtype:</h2>
+        <ul className="list-disc pl-5">
+          {summerPerFortypeMedSekker.map(({ fortype, sum, justertVekt }) => (
+            <li key={fortype}>
+              {fortype}: {sum.toFixed(2)} kg → Bestill nærmeste mengde:{" "}
+              <strong>{justertVekt} kg</strong>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
